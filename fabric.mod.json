@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "id": "cpmscripts",
+  "version": "0.10.1",
+  "name": "CPM Scripts",
+  "description": "Runs user Lua scripts that can read Minecraft player data and drive CustomPlayerModels value layers.",
+  "authors": [
+    "Кью"
+  ],
+  "license": "Freeware — свободное использование; распространение запрещено",
+  "icon": "icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "com.oleo.cpmscripts.CpmScriptsClient"
+    ],
+    "cpmapi": [
+      "com.oleo.cpmscripts.CpmPluginEntry"
+    ]
+  },
+  "depends": {
+    "fabricloader": "\u003e\u003d0.18.2",
+    "minecraft": "~1.21.11",
+    "fabric-api": "*",
+    "cpm": "*"
+  },
+  "jars": [
+    {
+      "file": "META-INF/jars/luaj-jse-3.0.1.jar"
+    }
+  ]
+}

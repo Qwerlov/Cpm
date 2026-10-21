@@ -1,0 +1,101 @@
+CPM Scripts — инструкция
+========================
+
+Мод запускает Lua-скрипты из папки config/cpmscripts/*.lua
+У каждого скрипта 20 раз в секунду вызывается функция tick(dt).
+Ошибка в скрипте останавливает только его; после правки: /cpmscripts reload
+
+Команды:
+  /cpmscripts reload      - перезагрузить скрипты
+  /cpmscripts toggle      - вкл/выкл все скрипты
+  /cpmscripts on | off    - явно вкл/выкл
+  /cpmscripts run <код>   - выполнить разовый Lua-код
+
+player — данные игрока (обновляются каждый тик):
+  vel.x / vel.y / vel.z  скорость относительно тела (x+ вправо, z+ вперёд)
+  velWorld.x/y/z         скорость в мировых осях
+  x, y, z                мировая позиция игрока (ноги)
+  yaw, yawDelta          поворот тела и его изменение за тик
+  onGround, inWater, sprinting, sneaking, fallFlying, swimming   (bool)
+  pose                   строка ("STANDING", "SWIMMING", ...)
+  time                   игровое время, тики
+  mainHand, offHand      предмет: {id, name, count}
+  effects                эффекты зелий: effects[1].id, .amp, .duration
+  armor.head/chest/legs/feet  надетая броня: {id, name, count}
+  chatLast, chatNew      текст последнего сообщения в чате / флаг "новое в этом тике"
+  headYaw, pitch         поворот головы; yaw - тело
+  view.x/y/z             вектор взгляда (куда смотрит голова)
+  walkPos, walkSpeed     фаза и скорость ванильной анимации ходьбы
+  swinging, swingTime    замах рукой и его тик
+  using                  true, если предмет используется (еда, лук, щит)
+  useKey                 зажата ли кнопка "использовать" (ПКМ) — для любого предмета
+  attackKey              зажата ЛКМ
+  attackHit              удар РЕАЛЬНО попал по существу/блоку (2 тика, событие Майна)
+  blockUse, blockUseNew  id блока, по которому кликнули ПКМ (сундук и т.п.) / флаг "в этом тике"
+  useItem, useTicks      какой предмет и сколько тиков осталось
+  health, maxHealth, absorption, food, saturation
+  air, maxAir            воздух под водой
+  fallDistance           высота падения
+  onFire                 горит ли
+  dayTime                время суток (0..24000)
+  raining, thundering    дождь, гроза
+  riding, vehicle        сидит ли на транспорте, его id ("minecraft:boat")
+
+cpm — управление CustomPlayerModels:
+  cpm.set("имя", 0..255)  выставить value-слой
+  cpm.get("имя")          текущее значение (-1 если нет)
+  cpm.play("имя")         запустить анимацию/жест
+  cpm.stop("имя")         остановить
+  cpm.ready()             true, если CPM подключён
+
+world — блоки в мире (координаты дробные, в блоках):
+  world.solid(x, y, z)    true, если твёрдый полный блок
+  world.block(x, y, z)    {id, solid, air, liquid}
+  world.shape(x, y, z)    точная коллизия блока: список боксов
+                          { {x1,y1,z1,x2,y2,z2}, ... } в координатах блока (0..1)
+  world.raycast(x1,y1,z1, x2,y2,z2)
+                          луч по коллизиям блоков:
+                          {hit, x,y,z (точка), side ("up","north",...), id}
+  world.entities(радиус)  сущности вокруг игрока:
+                          entities[1].id, .name, .x/.y/.z, .dist, .player
+
+keys — любая клавиша по имени, без биндов в Управлении:
+  keys.down("g")          клавиша зажата (g, space, left.shift, f3, ...)
+  keys.pressed("g")       нажата с прошлого тика (фронт)
+
+log(msg) — вывести в чат.
+sendLocalChat(текст) — сообщение только в свой чат (на сервер не уходит).
+sendChat(текст) — настоящее сообщение на сервер.
+hasEffect("minecraft:speed") — true, если эффект есть. effectAmp(id) — его уровень (0+).
+countEntities("minecraft:zombie", радиус) — сколько сущностей рядом ("" = все).
+
+БИБЛИОТЕКИ (папка lib рядом со скриптами):
+
+  Файлы из cpmscripts_libs.zip распаковать в config/cpmscripts/lib/
+  (папку lib создать, если её нет). Тогда в скрипте:
+
+      local util = require("util")
+      local spring = require("spring")
+
+  Доступные модули:
+  util       — помощники (clamp, lerp, damp и т.п.)
+  spring     — пружинная физика для плавных движений
+  noise      — шум (покачивания, дрожь)
+  cloth      — имитация ткани
+  vec        — векторная математика
+  easing     — функции сглаживания (плавные переходы)
+  waves      — волны
+  fsm        — конечный автомат (состояния)
+  rope       — верёвка/цепь
+  collision  — простые проверки столкновений
+
+Скелет скрипта:
+
+  function tick(dt)
+      if not cpm.ready() then return end
+      if player.sprinting then
+          cpm.set("tail1_x", 200)
+      else
+          cpm.set("tail1_x", 127)
+      end
+  end
